@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Media;
@@ -10,8 +11,8 @@ using System.Windows.Forms;
 [assembly: AssemblyDescription("A standing-desk routine timer for Windows")]
 [assembly: AssemblyCompany("Raul Soto")]
 [assembly: AssemblyProduct("Ctrl+Alt+Stand")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
+[assembly: AssemblyVersion("0.2.0.0")]
+[assembly: AssemblyFileVersion("0.2.0.0")]
 
 namespace CtrlAltStand
 {
@@ -57,11 +58,24 @@ namespace CtrlAltStand
 
             return DeskPhase.Sit;
         }
+
+        public CyclePlan Clone()
+        {
+            CyclePlan copy = new CyclePlan();
+            copy.SitMinutes = SitMinutes;
+            copy.StandMinutes = StandMinutes;
+            copy.MoveMinutes = MoveMinutes;
+            copy.MoveEnabled = MoveEnabled;
+            copy.StartPhase = StartPhase;
+            return copy;
+        }
     }
 
     internal sealed class AppSettings
     {
         public readonly CyclePlan Plan = new CyclePlan();
+        public CyclePlan Profile1;
+        public CyclePlan Profile2;
         public bool SoundEnabled = true;
         public bool AlwaysOnTop = true;
 
@@ -102,7 +116,15 @@ namespace CtrlAltStand
                 int parsedNumber;
                 bool parsedBoolean;
 
-                if (key == "SitMinutes" && int.TryParse(value, out parsedNumber))
+                if (key.StartsWith("Profile1.", StringComparison.OrdinalIgnoreCase))
+                {
+                    LoadProfileValue(1, key.Substring(9), value);
+                }
+                else if (key.StartsWith("Profile2.", StringComparison.OrdinalIgnoreCase))
+                {
+                    LoadProfileValue(2, key.Substring(9), value);
+                }
+                else if (key == "SitMinutes" && int.TryParse(value, out parsedNumber))
                 {
                     Plan.SitMinutes = ClampMinutes(parsedNumber);
                 }
@@ -143,7 +165,7 @@ namespace CtrlAltStand
                 Directory.CreateDirectory(directory);
             }
 
-            string[] lines =
+            List<string> lines = new List<string>
             {
                 "SitMinutes=" + Plan.SitMinutes,
                 "StandMinutes=" + Plan.StandMinutes,
@@ -154,7 +176,82 @@ namespace CtrlAltStand
                 "AlwaysOnTop=" + AlwaysOnTop
             };
 
-            File.WriteAllLines(SettingsPath, lines);
+            AppendProfile(lines, "Profile1", Profile1);
+            AppendProfile(lines, "Profile2", Profile2);
+            File.WriteAllLines(SettingsPath, lines.ToArray());
+        }
+
+        public CyclePlan GetProfile(int slot)
+        {
+            return slot == 1 ? Profile1 : Profile2;
+        }
+
+        public void SaveProfile(int slot)
+        {
+            if (slot == 1)
+            {
+                Profile1 = Plan.Clone();
+            }
+            else
+            {
+                Profile2 = Plan.Clone();
+            }
+        }
+
+        private void LoadProfileValue(int slot, string field, string value)
+        {
+            CyclePlan profile = slot == 1 ? Profile1 : Profile2;
+            if (profile == null)
+            {
+                profile = new CyclePlan();
+                if (slot == 1)
+                {
+                    Profile1 = profile;
+                }
+                else
+                {
+                    Profile2 = profile;
+                }
+            }
+
+            int parsedNumber;
+            bool parsedBoolean;
+            if (field == "SitMinutes" && int.TryParse(value, out parsedNumber))
+            {
+                profile.SitMinutes = ClampMinutes(parsedNumber);
+            }
+            else if (field == "StandMinutes" && int.TryParse(value, out parsedNumber))
+            {
+                profile.StandMinutes = ClampMinutes(parsedNumber);
+            }
+            else if (field == "MoveMinutes" && int.TryParse(value, out parsedNumber))
+            {
+                profile.MoveMinutes = ClampMinutes(parsedNumber);
+            }
+            else if (field == "MoveEnabled" && bool.TryParse(value, out parsedBoolean))
+            {
+                profile.MoveEnabled = parsedBoolean;
+            }
+            else if (field == "StartPhase")
+            {
+                profile.StartPhase = string.Equals(value, "Stand", StringComparison.OrdinalIgnoreCase)
+                    ? DeskPhase.Stand
+                    : DeskPhase.Sit;
+            }
+        }
+
+        private static void AppendProfile(List<string> lines, string prefix, CyclePlan profile)
+        {
+            if (profile == null)
+            {
+                return;
+            }
+
+            lines.Add(prefix + ".SitMinutes=" + profile.SitMinutes);
+            lines.Add(prefix + ".StandMinutes=" + profile.StandMinutes);
+            lines.Add(prefix + ".MoveMinutes=" + profile.MoveMinutes);
+            lines.Add(prefix + ".MoveEnabled=" + profile.MoveEnabled);
+            lines.Add(prefix + ".StartPhase=" + profile.StartPhase);
         }
 
         private static int ClampMinutes(int value)
@@ -258,6 +355,7 @@ namespace CtrlAltStand
         private readonly Label clockLabel;
         private readonly Label statusLabel;
         private readonly Label nextLabel;
+        private readonly Label settingsHintLabel;
         private readonly Panel progressTrack;
         private readonly Panel progressFill;
         private readonly Button startPauseButton;
@@ -268,9 +366,12 @@ namespace CtrlAltStand
         private readonly CheckBox soundInput;
         private readonly CheckBox topMostInput;
         private readonly ComboBox startPhaseInput;
+        private readonly Timer profileArmTimer;
 
         private DeskPhase phase = DeskPhase.Sit;
         private bool running;
+        private bool saveProfileArmed;
+        private bool updatingSettingsControls;
         private DateTime phaseEndsAt;
         private TimeSpan pausedRemaining;
         private int phaseTotalSeconds;
@@ -287,9 +388,9 @@ namespace CtrlAltStand
             BackColor = WindowColor;
             ForeColor = Color.White;
             Font = new Font("Segoe UI", 9F);
-            ClientSize = new Size(470, 785);
-            MinimumSize = new Size(486, 824);
-            MaximumSize = new Size(486, 824);
+            ClientSize = new Size(470, 850);
+            MinimumSize = new Size(486, 889);
+            MaximumSize = new Size(486, 889);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             StartPosition = FormStartPosition.Manual;
@@ -306,7 +407,7 @@ namespace CtrlAltStand
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 75));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 310));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 245));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 310));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             Panel header = new Panel();
@@ -406,13 +507,15 @@ namespace CtrlAltStand
             TableLayoutPanel settingsLayout = new TableLayoutPanel();
             settingsLayout.Dock = DockStyle.Fill;
             settingsLayout.ColumnCount = 3;
-            settingsLayout.RowCount = 4;
+            settingsLayout.RowCount = 6;
             settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
-            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
-            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 75));
+            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             settingsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             sitInput = MakeDurationInput(settings.Plan.SitMinutes);
@@ -434,7 +537,7 @@ namespace CtrlAltStand
             startPhasePanel.FlowDirection = FlowDirection.LeftToRight;
             startPhasePanel.WrapContents = false;
             startPhasePanel.Margin = new Padding(0);
-            startPhasePanel.Padding = new Padding(0, 4, 0, 0);
+            startPhasePanel.Padding = new Padding(0, 2, 0, 0);
             Label startPhaseLabel = new Label();
             startPhaseLabel.Text = "Start with";
             startPhaseLabel.AutoSize = true;
@@ -442,11 +545,12 @@ namespace CtrlAltStand
             startPhaseLabel.Margin = new Padding(0, 7, 8, 0);
             startPhaseInput = new ComboBox();
             startPhaseInput.DropDownStyle = ComboBoxStyle.DropDownList;
-            startPhaseInput.FlatStyle = FlatStyle.Flat;
-            startPhaseInput.BackColor = Color.FromArgb(15, 23, 42);
-            startPhaseInput.ForeColor = Color.White;
+            startPhaseInput.FlatStyle = FlatStyle.Standard;
+            startPhaseInput.BackColor = Color.White;
+            startPhaseInput.ForeColor = Color.FromArgb(15, 23, 42);
             startPhaseInput.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
-            startPhaseInput.Width = 92;
+            startPhaseInput.Width = 104;
+            startPhaseInput.Margin = new Padding(0, 2, 0, 2);
             startPhaseInput.Items.Add("Sit");
             startPhaseInput.Items.Add("Stand");
             startPhaseInput.SelectedIndex = settings.Plan.StartPhase == DeskPhase.Stand ? 1 : 0;
@@ -464,7 +568,54 @@ namespace CtrlAltStand
             applyHint.Font = new Font("Segoe UI", 8F);
             settingsLayout.Controls.Add(applyHint, 1, 3);
             settingsLayout.SetColumnSpan(applyHint, 2);
+
+            FlowLayoutPanel memoryPanel = new FlowLayoutPanel();
+            memoryPanel.Dock = DockStyle.Fill;
+            memoryPanel.FlowDirection = FlowDirection.LeftToRight;
+            memoryPanel.WrapContents = false;
+            memoryPanel.Margin = new Padding(0);
+            memoryPanel.Padding = new Padding(0, 5, 0, 0);
+            Label memoryLabel = new Label();
+            memoryLabel.Text = "Memory";
+            memoryLabel.AutoSize = true;
+            memoryLabel.ForeColor = Color.White;
+            memoryLabel.Margin = new Padding(0, 8, 8, 0);
+            Button setProfileButton = MakeMemoryButton("Set", 50);
+            Button profileOneButton = MakeMemoryButton("1", 36);
+            Button profileTwoButton = MakeMemoryButton("2", 36);
+            Button defaultsButton = MakeMemoryButton("Defaults", 82);
+            setProfileButton.Click += delegate { ArmProfileSave(); };
+            profileOneButton.Click += delegate { ProfileButtonPressed(1); };
+            profileTwoButton.Click += delegate { ProfileButtonPressed(2); };
+            defaultsButton.Click += delegate { RestoreDefaults(); };
+            memoryPanel.Controls.Add(memoryLabel);
+            memoryPanel.Controls.Add(setProfileButton);
+            memoryPanel.Controls.Add(profileOneButton);
+            memoryPanel.Controls.Add(profileTwoButton);
+            memoryPanel.Controls.Add(defaultsButton);
+            settingsLayout.Controls.Add(memoryPanel, 0, 4);
+            settingsLayout.SetColumnSpan(memoryPanel, 3);
+
+            settingsHintLabel = new Label();
+            settingsHintLabel.Text = "Set, then 1 or 2 saves; 1 or 2 loads";
+            settingsHintLabel.ForeColor = MutedTextColor;
+            settingsHintLabel.Dock = DockStyle.Fill;
+            settingsHintLabel.TextAlign = ContentAlignment.MiddleRight;
+            settingsHintLabel.Font = new Font("Segoe UI", 8F);
+            settingsLayout.Controls.Add(settingsHintLabel, 0, 5);
+            settingsLayout.SetColumnSpan(settingsHintLabel, 3);
+
             settingsBox.Controls.Add(settingsLayout);
+
+            Panel settingsContainer = new Panel();
+            settingsContainer.Dock = DockStyle.Fill;
+            settingsContainer.Controls.Add(settingsBox);
+            Panel settingsBottomBorder = new Panel();
+            settingsBottomBorder.Dock = DockStyle.Bottom;
+            settingsBottomBorder.Height = 2;
+            settingsBottomBorder.BackColor = Color.FromArgb(148, 163, 184);
+            settingsContainer.Controls.Add(settingsBottomBorder);
+            settingsBottomBorder.BringToFront();
 
             Label footer = new Label();
             footer.Text = "Tip: movement helps circulation more than standing still.";
@@ -476,7 +627,7 @@ namespace CtrlAltStand
             root.Controls.Add(header, 0, 0);
             root.Controls.Add(phaseCard, 0, 1);
             root.Controls.Add(buttons, 0, 2);
-            root.Controls.Add(settingsBox, 0, 3);
+            root.Controls.Add(settingsContainer, 0, 3);
             root.Controls.Add(footer, 0, 4);
             Controls.Add(root);
 
@@ -491,6 +642,14 @@ namespace CtrlAltStand
             clock.Interval = 250;
             clock.Tick += delegate { TickClock(); };
             clock.Start();
+
+            profileArmTimer = new Timer();
+            profileArmTimer.Interval = 6000;
+            profileArmTimer.Tick += delegate
+            {
+                DisarmProfileSave();
+                settingsHintLabel.Text = "Save cancelled; choose Set to try again";
+            };
 
             sitInput.ValueChanged += SettingsChanged;
             standInput.ValueChanged += SettingsChanged;
@@ -531,6 +690,22 @@ namespace CtrlAltStand
             button.ForeColor = Color.White;
             button.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             button.Margin = new Padding(3);
+            button.Cursor = Cursors.Hand;
+            return button;
+        }
+
+        private static Button MakeMemoryButton(string text, int width)
+        {
+            Button button = new Button();
+            button.Text = text;
+            button.Width = width;
+            button.Height = 30;
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = 0;
+            button.BackColor = Color.FromArgb(71, 85, 105);
+            button.ForeColor = Color.White;
+            button.Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold);
+            button.Margin = new Padding(2, 0, 2, 0);
             button.Cursor = Cursors.Hand;
             return button;
         }
@@ -730,8 +905,88 @@ namespace CtrlAltStand
             FlashTaskbar();
         }
 
+        private void ArmProfileSave()
+        {
+            saveProfileArmed = true;
+            profileArmTimer.Stop();
+            profileArmTimer.Start();
+            settingsHintLabel.Text = "Press 1 or 2 to save the current schedule";
+        }
+
+        private void DisarmProfileSave()
+        {
+            saveProfileArmed = false;
+            profileArmTimer.Stop();
+        }
+
+        private void ProfileButtonPressed(int slot)
+        {
+            if (saveProfileArmed)
+            {
+                DisarmProfileSave();
+                settings.SaveProfile(slot);
+                TrySaveSettings();
+                settingsHintLabel.Text = "Memory " + slot + " saved";
+                return;
+            }
+
+            CyclePlan profile = settings.GetProfile(slot);
+            if (profile == null)
+            {
+                settingsHintLabel.Text = "Memory " + slot + " is empty — choose Set first";
+                return;
+            }
+
+            ApplyPlanAndReset(profile);
+            settingsHintLabel.Text = "Memory " + slot + " loaded";
+        }
+
+        private void RestoreDefaults()
+        {
+            DisarmProfileSave();
+            ApplyPlanAndReset(new CyclePlan());
+            settingsHintLabel.Text = "Default schedule restored";
+        }
+
+        private void ApplyPlanAndReset(CyclePlan plan)
+        {
+            updatingSettingsControls = true;
+            settings.Plan.SitMinutes = plan.SitMinutes;
+            settings.Plan.StandMinutes = plan.StandMinutes;
+            settings.Plan.MoveMinutes = plan.MoveMinutes;
+            settings.Plan.MoveEnabled = plan.MoveEnabled;
+            settings.Plan.StartPhase = plan.StartPhase;
+            sitInput.Value = plan.SitMinutes;
+            standInput.Value = plan.StandMinutes;
+            moveInput.Value = plan.MoveMinutes;
+            moveEnabledInput.Checked = plan.MoveEnabled;
+            startPhaseInput.SelectedIndex = plan.StartPhase == DeskPhase.Stand ? 1 : 0;
+            moveInput.Enabled = plan.MoveEnabled;
+            updatingSettingsControls = false;
+
+            TrySaveSettings();
+            ResetCycle();
+        }
+
+        private void TrySaveSettings()
+        {
+            try
+            {
+                settings.Save();
+            }
+            catch
+            {
+                // A settings write failure should never stop the active timer.
+            }
+        }
+
         private void SettingsChanged(object sender, EventArgs e)
         {
+            if (updatingSettingsControls)
+            {
+                return;
+            }
+
             DeskPhase selectedStartPhase = startPhaseInput.SelectedIndex == 1
                 ? DeskPhase.Stand
                 : DeskPhase.Sit;
@@ -753,14 +1008,7 @@ namespace CtrlAltStand
                 pausedRemaining = TimeSpan.FromSeconds(phaseTotalSeconds);
             }
 
-            try
-            {
-                settings.Save();
-            }
-            catch
-            {
-                // A settings write failure should never stop the active timer.
-            }
+            TrySaveSettings();
 
             UpdateDisplay();
         }
@@ -816,9 +1064,11 @@ namespace CtrlAltStand
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             clock.Stop();
+            profileArmTimer.Stop();
             trayIcon.Visible = false;
             trayIcon.Dispose();
             clock.Dispose();
+            profileArmTimer.Dispose();
             base.OnFormClosed(e);
         }
 
@@ -850,6 +1100,27 @@ namespace CtrlAltStand
             if (plan.Next(DeskPhase.Move) != DeskPhase.Sit) return false;
             plan.MoveEnabled = false;
             if (plan.Next(DeskPhase.Stand) != DeskPhase.Sit) return false;
+            plan.SitMinutes = 45;
+            plan.StartPhase = DeskPhase.Stand;
+            CyclePlan copy = plan.Clone();
+            plan.SitMinutes = 10;
+            if (copy.SitMinutes != 45) return false;
+            if (copy.StartPhase != DeskPhase.Stand) return false;
+
+            AppSettings memorySettings = new AppSettings();
+            memorySettings.Plan.SitMinutes = 35;
+            memorySettings.Plan.StandMinutes = 25;
+            memorySettings.Plan.MoveMinutes = 5;
+            memorySettings.Plan.MoveEnabled = true;
+            memorySettings.Plan.StartPhase = DeskPhase.Stand;
+            memorySettings.SaveProfile(1);
+            memorySettings.Plan.SitMinutes = 15;
+            if (memorySettings.Profile1 == null) return false;
+            if (memorySettings.Profile1.SitMinutes != 35) return false;
+            if (memorySettings.Profile1.StandMinutes != 25) return false;
+            if (memorySettings.Profile1.MoveMinutes != 5) return false;
+            if (!memorySettings.Profile1.MoveEnabled) return false;
+            if (memorySettings.Profile1.StartPhase != DeskPhase.Stand) return false;
             return true;
         }
     }

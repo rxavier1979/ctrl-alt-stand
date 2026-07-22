@@ -1,0 +1,43 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows build and tests
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build Ctrl+Alt+Stand
+        shell: powershell
+        run: .\build.ps1
+
+      - name: Run self-tests
+        shell: powershell
+        run: |
+          .\dist\CtrlAltStand.exe --self-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run startup smoke test
+        shell: powershell
+        run: |
+          .\dist\CtrlAltStand.exe --smoke-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v7
+        with:
+          name: CtrlAltStand-windows
+          path: dist/CtrlAltStand.exe
+          if-no-files-found: error

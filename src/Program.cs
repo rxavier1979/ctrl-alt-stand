@@ -278,9 +278,9 @@ namespace CtrlAltStand
             BackColor = WindowColor;
             ForeColor = Color.White;
             Font = new Font("Segoe UI", 9F);
-            ClientSize = new Size(430, 625);
-            MinimumSize = new Size(446, 664);
-            MaximumSize = new Size(446, 664);
+            ClientSize = new Size(470, 760);
+            MinimumSize = new Size(486, 799);
+            MaximumSize = new Size(486, 799);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             StartPosition = FormStartPosition.Manual;
@@ -294,10 +294,10 @@ namespace CtrlAltStand
             root.Dock = DockStyle.Fill;
             root.ColumnCount = 1;
             root.RowCount = 5;
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 235));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 184));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 75));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 310));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 220));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             Panel header = new Panel();
@@ -313,7 +313,7 @@ namespace CtrlAltStand
             subtitle.Font = new Font("Segoe UI", 9F);
             subtitle.ForeColor = MutedTextColor;
             subtitle.AutoSize = true;
-            subtitle.Location = new Point(2, 34);
+            subtitle.Location = new Point(2, 45);
             header.Controls.Add(appName);
             header.Controls.Add(subtitle);
 
@@ -326,9 +326,9 @@ namespace CtrlAltStand
             phaseLayout.Dock = DockStyle.Fill;
             phaseLayout.ColumnCount = 1;
             phaseLayout.RowCount = 5;
-            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
-            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
-            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 35));
             phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
             phaseLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -401,8 +401,8 @@ namespace CtrlAltStand
             settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
-            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 68));
-            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 37));
+            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
+            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
             settingsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             sitInput = MakeDurationInput(settings.Plan.SitMinutes);

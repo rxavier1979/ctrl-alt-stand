@@ -4,6 +4,10 @@ All notable changes to Ctrl+Alt+Stand will be documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Prevented phase labels, countdown text, buttons, and duration controls from being clipped at elevated Windows display-scaling levels.
+
 ### Added
 
 - Start-relative Sit, Stand, and optional Move routine.

@@ -8,6 +8,7 @@ A lightweight Windows standing-desk timer for building better sit, stand, and mo
 
 - Defaults to 30 minutes sitting, 20 minutes standing, and 3 minutes moving.
 - Adjustable phase durations from 1 to 180 minutes.
+- Choose whether each work session starts with sitting or standing.
 - Optional movement phase for a simple Sit → Stand routine.
 - Start, pause, reset, or skip the current phase at any time.
 - Large color-coded desktop cue, Windows sound, notification, and taskbar flash at transitions.

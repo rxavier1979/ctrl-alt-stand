@@ -28,6 +28,7 @@ namespace CtrlAltStand
         public int StandMinutes = 20;
         public int MoveMinutes = 3;
         public bool MoveEnabled = true;
+        public DeskPhase StartPhase = DeskPhase.Sit;
 
         public int SecondsFor(DeskPhase phase)
         {
@@ -117,6 +118,12 @@ namespace CtrlAltStand
                 {
                     Plan.MoveEnabled = parsedBoolean;
                 }
+                else if (key == "StartPhase")
+                {
+                    Plan.StartPhase = string.Equals(value, "Stand", StringComparison.OrdinalIgnoreCase)
+                        ? DeskPhase.Stand
+                        : DeskPhase.Sit;
+                }
                 else if (key == "SoundEnabled" && bool.TryParse(value, out parsedBoolean))
                 {
                     SoundEnabled = parsedBoolean;
@@ -142,6 +149,7 @@ namespace CtrlAltStand
                 "StandMinutes=" + Plan.StandMinutes,
                 "MoveMinutes=" + Plan.MoveMinutes,
                 "MoveEnabled=" + Plan.MoveEnabled,
+                "StartPhase=" + Plan.StartPhase,
                 "SoundEnabled=" + SoundEnabled,
                 "AlwaysOnTop=" + AlwaysOnTop
             };
@@ -259,6 +267,7 @@ namespace CtrlAltStand
         private readonly CheckBox moveEnabledInput;
         private readonly CheckBox soundInput;
         private readonly CheckBox topMostInput;
+        private readonly ComboBox startPhaseInput;
 
         private DeskPhase phase = DeskPhase.Sit;
         private bool running;
@@ -278,9 +287,9 @@ namespace CtrlAltStand
             BackColor = WindowColor;
             ForeColor = Color.White;
             Font = new Font("Segoe UI", 9F);
-            ClientSize = new Size(470, 760);
-            MinimumSize = new Size(486, 799);
-            MaximumSize = new Size(486, 799);
+            ClientSize = new Size(470, 785);
+            MinimumSize = new Size(486, 824);
+            MaximumSize = new Size(486, 824);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             StartPosition = FormStartPosition.Manual;
@@ -297,7 +306,7 @@ namespace CtrlAltStand
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 75));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 310));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 220));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 245));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             Panel header = new Panel();
@@ -397,11 +406,12 @@ namespace CtrlAltStand
             TableLayoutPanel settingsLayout = new TableLayoutPanel();
             settingsLayout.Dock = DockStyle.Fill;
             settingsLayout.ColumnCount = 3;
-            settingsLayout.RowCount = 3;
+            settingsLayout.RowCount = 4;
             settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
             settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
+            settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
             settingsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
             settingsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -418,15 +428,42 @@ namespace CtrlAltStand
             settingsLayout.Controls.Add(moveEnabledInput, 0, 1);
             settingsLayout.SetColumnSpan(moveEnabledInput, 2);
             settingsLayout.Controls.Add(soundInput, 2, 1);
-            settingsLayout.Controls.Add(topMostInput, 0, 2);
-            settingsLayout.SetColumnSpan(topMostInput, 2);
+
+            FlowLayoutPanel startPhasePanel = new FlowLayoutPanel();
+            startPhasePanel.Dock = DockStyle.Fill;
+            startPhasePanel.FlowDirection = FlowDirection.LeftToRight;
+            startPhasePanel.WrapContents = false;
+            startPhasePanel.Margin = new Padding(0);
+            startPhasePanel.Padding = new Padding(0, 4, 0, 0);
+            Label startPhaseLabel = new Label();
+            startPhaseLabel.Text = "Start with";
+            startPhaseLabel.AutoSize = true;
+            startPhaseLabel.ForeColor = Color.White;
+            startPhaseLabel.Margin = new Padding(0, 7, 8, 0);
+            startPhaseInput = new ComboBox();
+            startPhaseInput.DropDownStyle = ComboBoxStyle.DropDownList;
+            startPhaseInput.FlatStyle = FlatStyle.Flat;
+            startPhaseInput.BackColor = Color.FromArgb(15, 23, 42);
+            startPhaseInput.ForeColor = Color.White;
+            startPhaseInput.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            startPhaseInput.Width = 92;
+            startPhaseInput.Items.Add("Sit");
+            startPhaseInput.Items.Add("Stand");
+            startPhaseInput.SelectedIndex = settings.Plan.StartPhase == DeskPhase.Stand ? 1 : 0;
+            startPhasePanel.Controls.Add(startPhaseLabel);
+            startPhasePanel.Controls.Add(startPhaseInput);
+            settingsLayout.Controls.Add(startPhasePanel, 0, 2);
+            settingsLayout.SetColumnSpan(startPhasePanel, 3);
+            settingsLayout.Controls.Add(topMostInput, 0, 3);
+
             Label applyHint = new Label();
-            applyHint.Text = "Changes apply next phase";
+            applyHint.Text = "Applies on Reset while running";
             applyHint.ForeColor = MutedTextColor;
             applyHint.Dock = DockStyle.Fill;
             applyHint.TextAlign = ContentAlignment.MiddleRight;
             applyHint.Font = new Font("Segoe UI", 8F);
-            settingsLayout.Controls.Add(applyHint, 2, 2);
+            settingsLayout.Controls.Add(applyHint, 1, 3);
+            settingsLayout.SetColumnSpan(applyHint, 2);
             settingsBox.Controls.Add(settingsLayout);
 
             Label footer = new Label();
@@ -461,8 +498,10 @@ namespace CtrlAltStand
             moveEnabledInput.CheckedChanged += SettingsChanged;
             soundInput.CheckedChanged += SettingsChanged;
             topMostInput.CheckedChanged += SettingsChanged;
+            startPhaseInput.SelectedIndexChanged += SettingsChanged;
 
             moveInput.Enabled = settings.Plan.MoveEnabled;
+            phase = settings.Plan.StartPhase;
             pausedRemaining = TimeSpan.FromSeconds(settings.Plan.SecondsFor(phase));
             phaseTotalSeconds = settings.Plan.SecondsFor(phase);
             UpdateDisplay();
@@ -591,7 +630,7 @@ namespace CtrlAltStand
         private void ResetCycle()
         {
             running = false;
-            phase = DeskPhase.Sit;
+            phase = settings.Plan.StartPhase;
             phaseTotalSeconds = settings.Plan.SecondsFor(phase);
             pausedRemaining = TimeSpan.FromSeconds(phaseTotalSeconds);
             UpdateDisplay();
@@ -693,14 +732,26 @@ namespace CtrlAltStand
 
         private void SettingsChanged(object sender, EventArgs e)
         {
+            DeskPhase selectedStartPhase = startPhaseInput.SelectedIndex == 1
+                ? DeskPhase.Stand
+                : DeskPhase.Sit;
+            bool startPhaseChanged = settings.Plan.StartPhase != selectedStartPhase;
             settings.Plan.SitMinutes = (int)sitInput.Value;
             settings.Plan.StandMinutes = (int)standInput.Value;
             settings.Plan.MoveMinutes = (int)moveInput.Value;
             settings.Plan.MoveEnabled = moveEnabledInput.Checked;
+            settings.Plan.StartPhase = selectedStartPhase;
             settings.SoundEnabled = soundInput.Checked;
             settings.AlwaysOnTop = topMostInput.Checked;
             moveInput.Enabled = settings.Plan.MoveEnabled;
             TopMost = settings.AlwaysOnTop;
+
+            if (startPhaseChanged && !running)
+            {
+                phase = settings.Plan.StartPhase;
+                phaseTotalSeconds = settings.Plan.SecondsFor(phase);
+                pausedRemaining = TimeSpan.FromSeconds(phaseTotalSeconds);
+            }
 
             try
             {

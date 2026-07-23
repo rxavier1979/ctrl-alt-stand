@@ -1,0 +1,30 @@
+<Window x:Class="CtrlAltStand.CueWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ctrl+Alt+Stand reminder"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize"
+        SizeToContent="Manual" Width="440" Height="180"
+        WindowStartupLocation="Manual">
+    <Border x:Name="Root" CornerRadius="16" Padding="22" Background="#FF10B981">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="34" ShadowDepth="10" Direction="270" Opacity="0.5" Color="Black" />
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock x:Name="TitleText" Grid.Row="0" Text="TIME TO STAND"
+                       FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="31" FontWeight="Bold"
+                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+            <TextBlock x:Name="DetailText" Grid.Row="1" Text="Raise the desk and change position."
+                       FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13"
+                       Foreground="White" HorizontalAlignment="Center" Margin="0,10,0,0"
+                       TextWrapping="Wrap" TextAlignment="Center" />
+            <TextBlock Grid.Row="2" Text="Click to acknowledge" FontSize="10"
+                       Foreground="#E1FFFFFF" HorizontalAlignment="Right" Margin="0,12,0,0" />
+        </Grid>
+    </Border>
+</Window>

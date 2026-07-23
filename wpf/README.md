@@ -1,0 +1,72 @@
+# Ctrl+Alt+Stand — WPF (refined-dark redesign)
+
+This folder is a **UI-layer rewrite** of Ctrl+Alt+Stand in WPF, implementing the refined-dark redesign
+(circular progress ring, phase-following accent, custom steppers/toggles/segmented control). It sits
+**alongside** the original WinForms app in `../src/Program.cs` — nothing in the original was changed, so
+you can compare, build either, and swap over only when you're happy.
+
+## What carried over unchanged
+
+The schedule engine and persistence are ported **verbatim** from the original into `Core.cs`:
+`DeskPhase`, `CyclePlan`, `AppSettings` (same `%LOCALAPPDATA%\CtrlAltStand\settings.ini` format and the two
+memory profiles), and `SelfTests`. Behavior — phase order, clamping (1–180), memory arm/save/load,
+"start with", movement-break toggle, always-on-top, sound, tray, taskbar flash — matches the original.
+
+## Files
+
+| File | Role |
+|---|---|
+| `CtrlAltStand.csproj` | Classic (non-SDK) WPF project, `v4.8`, builds with the in-box MSBuild |
+| `app.manifest` | Per-Monitor v2 DPI awareness |
+| `AssemblyInfo.cs` | Title / version / WPF theme info |
+| `Core.cs` | Ported logic (DeskPhase, CyclePlan, AppSettings, SelfTests) — UI-agnostic |
+| `App.xaml` / `App.xaml.cs` | Resources (palette + control styles); startup + `--self-test` handling |
+| `MainWindow.xaml` / `.cs` | The window: ring, timer, status pill, controls, steppers, toggles, segmented, memory |
+| `CueWindow.xaml` / `.cs` | The bottom-right phase-transition cue |
+| `build.ps1` | Convenience build (dotnet or msbuild) |
+
+## Build & run
+
+```powershell
+.\build.ps1
+.\dist\CtrlAltStand.exe
+```
+
+Builds with the **in-box .NET Framework MSBuild** (`C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe`)
+— no .NET SDK and no Visual Studio required. `build.ps1` finds and invokes it for you. WPF needs MSBuild
+(not raw `csc`) because XAML is compiled; the in-box MSBuild handles that via the WPF build targets shipped
+with the .NET Framework.
+
+Requirement: the **.NET Framework 4.x reference assemblies** (the "Developer Pack" / targeting pack). If the
+build reports *"The reference assemblies for .NETFramework,Version=v4.8 were not found,"* install the
+[.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/download/dotnet-framework/net48) once, or
+edit `<TargetFrameworkVersion>` in the `.csproj` to a version whose targeting pack you already have. The
+shipped `.exe` stays framework-dependent with no third-party runtime libraries — same footprint as the
+original WinForms app.
+
+Self-check (same flags as the original):
+
+```powershell
+.\dist\CtrlAltStand.exe --self-test    # exit code 0 = pass
+.\dist\CtrlAltStand.exe --smoke-test   # opens invisibly, closes after ~0.9s
+```
+
+## Note on verification
+
+This port was authored without a Windows compiler in the loop (it was built in a Linux environment where
+WPF can't be compiled), so treat the **first local build as the test**. The C# is written to the in-box
+compiler's level (C# 5 — no expression-bodied members, etc.). If the build reports errors, send them over
+and they'll be quick to resolve — the logic layer is identical to your working app, so any issues will be
+in the new XAML/WPF surface, not the behavior.
+
+## Known intentional differences from the mockup
+
+- The toggle switch is standardized to 44×25 px (the HTML mockup used 40×23).
+- The title bar carries functional **minimize** and **close** buttons (the mockup showed three decorative dots).
+- Duration changes take effect on the next **Reset/Start** for the *current* phase (matching the original
+  app's behavior), while "Next" and the schedule update immediately.
+- The window **auto-fits** the screen: if it would be taller/wider than the work area (small display or
+  high DPI), it scales down proportionally on launch so the whole card stays visible.
+- Phase-transition **cues are persistent** — the bottom-right cue stays until you click it to acknowledge,
+  at most one is shown at a time (a newer phase replaces the older cue), and the taskbar flashes until the
+  window is brought to the foreground.

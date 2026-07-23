@@ -9,6 +9,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>WinExe</OutputType>
+    <ApplicationIcon>app.ico</ApplicationIcon>
     <RootNamespace>CtrlAltStand</RootNamespace>
     <AssemblyName>CtrlAltStand</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
@@ -64,6 +65,10 @@
     </Compile>
     <Compile Include="Core.cs" />
     <Compile Include="AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="app.ico" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

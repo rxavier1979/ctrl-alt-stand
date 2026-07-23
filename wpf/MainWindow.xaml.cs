@@ -437,14 +437,6 @@ namespace CtrlAltStand
                 try { System.Media.SystemSounds.Exclamation.Play(); } catch { }
             }
 
-            if (trayIcon != null)
-            {
-                trayIcon.BalloonTipTitle = "Ctrl+Alt+Stand — " + phaseName;
-                trayIcon.BalloonTipText = detail;
-                trayIcon.BalloonTipIcon = WinForms.ToolTipIcon.Info;
-                trayIcon.ShowBalloonTip(5000);
-            }
-
             // Persistent cue: keep at most one on screen; a newer phase replaces the older one.
             if (currentCue != null)
             {
@@ -458,11 +450,25 @@ namespace CtrlAltStand
             FlashTaskbar();
         }
 
+        private static Drawing.Icon LoadAppIcon()
+        {
+            try
+            {
+                var s = System.Windows.Application.GetResourceStream(
+                    new System.Uri("pack://application:,,,/app.ico")).Stream;
+                return new Drawing.Icon(s);
+            }
+            catch
+            {
+                return Drawing.SystemIcons.Information;
+            }
+        }
+
         private void SetupTray()
         {
             trayIcon = new WinForms.NotifyIcon
             {
-                Icon = Drawing.SystemIcons.Information,
+                Icon = LoadAppIcon(),
                 Text = "Ctrl+Alt+Stand",
                 Visible = true
             };

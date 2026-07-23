@@ -4,9 +4,9 @@
         Title="Ctrl+Alt+Stand reminder"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize"
-        SizeToContent="Manual" Width="440" Height="180"
+        SizeToContent="WidthAndHeight"
         WindowStartupLocation="Manual">
-    <Border x:Name="Root" CornerRadius="16" Padding="22" Background="#FF10B981">
+    <Border x:Name="Root" CornerRadius="16" Padding="16" MaxWidth="320" Background="#FF10B981">
         <Border.Effect>
             <DropShadowEffect BlurRadius="34" ShadowDepth="10" Direction="270" Opacity="0.5" Color="Black" />
         </Border.Effect>
@@ -17,10 +17,11 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock x:Name="TitleText" Grid.Row="0" Text="TIME TO STAND"
-                       FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="31" FontWeight="Bold"
-                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+                       FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="22" FontWeight="Bold"
+                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                       TextWrapping="Wrap" TextAlignment="Center" />
             <TextBlock x:Name="DetailText" Grid.Row="1" Text="Raise the desk and change position."
-                       FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13"
+                       FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12"
                        Foreground="White" HorizontalAlignment="Center" Margin="0,10,0,0"
                        TextWrapping="Wrap" TextAlignment="Center" />
             <TextBlock Grid.Row="2" Text="Click to acknowledge" FontSize="10"

@@ -4,6 +4,8 @@
 
 A lightweight Windows standing-desk timer for building better sit, stand, and movement routines. The schedule begins when you press **Start**—it never depends on the time of day.
 
+> **Refined-dark redesign (WPF):** A modernized visual version of the app — circular progress ring, phase-following accent color, and refined controls — lives in [`wpf/`](wpf/). Same features and logic; see [`wpf/README.md`](wpf/README.md) to build it.
+
 ## Features
 
 - Defaults to 30 minutes sitting, 20 minutes standing, and 3 minutes moving.

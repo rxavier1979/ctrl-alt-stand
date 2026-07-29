@@ -41,3 +41,38 @@ jobs:
           name: CtrlAltStand-windows
           path: dist/CtrlAltStand.exe
           if-no-files-found: error
+
+  wpf:
+    name: WPF build and tests
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      # Uses the same wpf\build.ps1 that produces the release binary, so CI
+      # exercises the in-box .NET Framework MSBuild rather than the SDK or
+      # Visual Studio. A missing 4.8 targeting pack surfaces as MSB3644 and
+      # falls back to the GAC; that is expected and the build still succeeds.
+      - name: Build Ctrl+Alt+Stand (WPF)
+        shell: powershell
+        run: .\wpf\build.ps1
+
+      - name: Run self-tests
+        shell: powershell
+        run: |
+          .\wpf\dist\CtrlAltStand.exe --self-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run startup smoke test
+        shell: powershell
+        run: |
+          .\wpf\dist\CtrlAltStand.exe --smoke-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload WPF executable
+        uses: actions/upload-artifact@v7
+        with:
+          name: CtrlAltStand-wpf-windows
+          path: wpf/dist/CtrlAltStand.exe
+          if-no-files-found: error

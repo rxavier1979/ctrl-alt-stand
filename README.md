@@ -22,7 +22,9 @@ A lightweight Windows standing-desk timer for building better sit, stand, and mo
 
 ## Download
 
-The first public Windows release will be published after hands-on testing is complete.
+Download the latest `CtrlAltStand.exe` from the [releases page](https://github.com/rxavier1979/ctrl-alt-stand/releases). Run it directly — there is no installer, and no runtime download is required on Windows 11. The executable is unsigned, so Windows may display an *Unknown publisher* warning.
+
+The download is the refined-dark WPF application built from [`wpf/`](wpf/). The original WinForms version in [`src/`](src/) is kept as legacy source and is no longer updated.
 
 ## Run locally
 

@@ -5,8 +5,8 @@ using System.Windows;
 [assembly: AssemblyDescription("A standing-desk routine timer for Windows")]
 [assembly: AssemblyCompany("Raul Soto")]
 [assembly: AssemblyProduct("Ctrl+Alt+Stand")]
-[assembly: AssemblyVersion("0.3.0.0")]
-[assembly: AssemblyFileVersion("0.3.0.0")]
+[assembly: AssemblyVersion("0.3.1.0")]
+[assembly: AssemblyFileVersion("0.3.1.0")]
 
 // WPF theme/assembly resource resolution.
 [assembly: ThemeInfo(

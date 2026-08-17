@@ -4,6 +4,13 @@ All notable changes to Ctrl+Alt+Stand will be documented here.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-08-17
+
+### Added
+
+- The version is now shown in the title bar and the system-tray tooltip, so the running build can be
+  identified at a glance.
+
 ### Fixed
 
 - Acknowledging a transition cue now also stops the taskbar flash. The taskbar button previously kept

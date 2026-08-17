@@ -2,7 +2,7 @@
 #
 # wpf\AssemblyInfo.cs is the single source of truth: the release workflow reads the version from
 # here, so bumping it is what causes a release to be cut. The legacy WinForms source in src\ is
-# frozen and carries its own, unrelated version — it is deliberately ignored here.
+# frozen and carries its own, unrelated version -- it is deliberately ignored here.
 
 [CmdletBinding()]
 param()

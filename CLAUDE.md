@@ -12,7 +12,12 @@ that are easy to get wrong here.
 - The C# is written to the in-box compiler's level (**C# 5** — no expression-bodied members, no
   string interpolation, no `?.`). Match it.
 - Repository PowerShell must run on **Windows PowerShell 5.1** — no ternary or null-coalescing
-  operators.
+  operators. Verify with `powershell.exe -NoProfile`, not `pwsh`: the two differ in ways that matter
+  (see next point).
+- **`.ps1` files and workflow `run:` blocks must be ASCII-only** — CI enforces it. PowerShell 5.1
+  reads UTF-8-without-BOM as Windows-1252, where an em dash's `0x94` byte becomes a `"` and silently
+  breaks the string; the script can then run partway and exit 0. `pwsh` does not reproduce this, so
+  local success proves nothing about CI. Write `--`, not an em dash.
 
 ## Version and release
 

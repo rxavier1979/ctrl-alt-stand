@@ -39,7 +39,7 @@ if (-not $unreleased.Success) { throw "CHANGELOG.md has no '## [Unreleased]' sec
 
 $entries = $unreleased.Groups['body'].Value.Trim()
 if ($entries -eq "") {
-    throw "CHANGELOG.md has nothing under [Unreleased] — there is nothing to release."
+    throw "CHANGELOG.md has nothing under [Unreleased] -- there is nothing to release."
 }
 
 $replacement = "## [Unreleased]`r`n`r`n## [$Version] - $Date`r`n`r`n$entries`r`n`r`n"

@@ -1,4 +1,4 @@
-# Build Ctrl+Alt+Stand (WPF) with the in-box .NET Framework MSBuild — no SDK or Visual Studio required.
+# Build Ctrl+Alt+Stand (WPF) with the in-box .NET Framework MSBuild -- no SDK or Visual Studio required.
 # Output: dist\CtrlAltStand.exe
 #
 # Falls back to a modern 'msbuild' or 'dotnet' if either is on PATH.

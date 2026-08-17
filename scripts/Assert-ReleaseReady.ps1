@@ -4,7 +4,7 @@
 # Checks:
 #   1. The version is a plain major.minor.patch.
 #   2. wpf\AssemblyInfo.cs agrees with -Version (both version attributes).
-#   3. CHANGELOG.md has a dated, non-empty section for the version — unless a hand-written
+#   3. CHANGELOG.md has a dated, non-empty section for the version -- unless a hand-written
 #      docs\release-notes\v<version>.md supplies the notes instead.
 #   4. CHANGELOG.md still has an "## [Unreleased]" heading, so the next change has somewhere to go.
 

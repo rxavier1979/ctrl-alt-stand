@@ -2,7 +2,7 @@ name: Release
 
 # Every new version gets a release, automatically.
 #
-# The trigger is the version bump itself landing on main — there is no separate "remember to tag
+# The trigger is the version bump itself landing on main -- there is no separate "remember to tag
 # it" step, because that is the step that gets forgotten. This workflow reads the version from
 # wpf/AssemblyInfo.cs; if no matching v<version> tag exists yet, it verifies the repository is
 # release-ready, builds, runs the checks, then tags and publishes with CtrlAltStand.exe attached.
@@ -41,7 +41,7 @@ jobs:
         run: |
           $v = & .\scripts\Get-AppVersion.ps1
           Write-Host "Version: $v"
-          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding ascii   # ascii: no BOM, and step outputs are always ASCII
 
       - name: Check whether v${{ steps.version.outputs.version }} is already released
         id: tag
@@ -50,11 +50,24 @@ jobs:
           $tag = "v${{ steps.version.outputs.version }}"
           $existing = git ls-remote --tags origin "refs/tags/$tag"
           if ($existing) {
-            Write-Host "$tag already exists — nothing to release."
-            "exists=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Host "$tag already exists -- nothing to release."
+            "exists=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding ascii   # ascii: no BOM, and step outputs are always ASCII
           } else {
-            Write-Host "$tag does not exist — this is a new version."
-            "exists=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Host "$tag does not exist -- this is a new version."
+            "exists=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding ascii   # ascii: no BOM, and step outputs are always ASCII
+          }
+
+      # A run step whose script fails to execute can produce no output at all. Without this guard
+      # that looked exactly like "already released": every publishing step below skipped and the
+      # job still reported success. Silence must never be mistaken for a decision.
+      - name: Guard against a missing release decision
+        shell: powershell
+        run: |
+          $decision = "${{ steps.tag.outputs.exists }}"
+          Write-Host "Release decision: '$decision'"
+          if ($decision -ne "true" -and $decision -ne "false") {
+            Write-Host "::error::The tag check produced no usable decision ('$decision'), so the release state is unknown. Refusing to continue."
+            exit 1
           }
 
       - name: Verify the repository is ready to release

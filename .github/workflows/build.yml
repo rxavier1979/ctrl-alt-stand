@@ -77,6 +77,33 @@ jobs:
           path: wpf/dist/CtrlAltStand.exe
           if-no-files-found: error
 
+  # Windows PowerShell 5.1 reads a UTF-8 file with no BOM as Windows-1252. An em dash (E2 80 94)
+  # then decodes with its 0x94 byte as a right double quote, which silently terminates a PowerShell
+  # string: the script parses into something other than what was written, runs partway, and can exit
+  # 0 having done nothing. That is not hypothetical -- it made the first release run skip publishing
+  # while reporting success. Keeping every .ps1 and workflow ASCII-only is the cheap durable defence.
+  encoding:
+    name: PowerShell and workflows are ASCII-only
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Reject non-ASCII characters
+        shell: bash
+        run: |
+          files=$(git ls-files '*.ps1' '.github/workflows/*.yml')
+          bad=$(echo "$files" | xargs grep -lP '[^\x00-\x7F]' 2>/dev/null || true)
+          if [ -n "$bad" ]; then
+            for f in $bad; do
+              echo "::error file=$f::Non-ASCII characters found. Use ASCII equivalents (-- for an em dash, plain quotes)."
+              grep -nP '[^\x00-\x7F]' "$f" | sed 's/^/    /'
+            done
+            exit 1
+          fi
+          echo "All tracked .ps1 files and workflows are ASCII-only."
+
   # Behavior changes are expected to arrive with their changelog entry, so the release notes are
   # never reconstructed from memory later. Deliberately scoped to app code (wpf/, src/): tooling,
   # CI, and docs-only changes are exempt, matching how the repository has been kept so far. Add the
@@ -103,7 +130,7 @@ jobs:
 
           code=$(echo "$changed" | grep -E '^(wpf|src)/.*\.(cs|xaml)$' || true)
           if [ -z "$code" ]; then
-            echo "No app-code changes — changelog entry not required."
+            echo "No app-code changes -- changelog entry not required."
             exit 0
           fi
           if echo "$changed" | grep -qx 'CHANGELOG.md'; then

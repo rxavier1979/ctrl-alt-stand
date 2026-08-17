@@ -76,3 +76,40 @@ jobs:
           name: CtrlAltStand-wpf-windows
           path: wpf/dist/CtrlAltStand.exe
           if-no-files-found: error
+
+  # Behavior changes are expected to arrive with their changelog entry, so the release notes are
+  # never reconstructed from memory later. Deliberately scoped to app code (wpf/, src/): tooling,
+  # CI, and docs-only changes are exempt, matching how the repository has been kept so far. Add the
+  # `skip-changelog` label to override on a code change that genuinely needs no entry.
+  changelog:
+    name: Changelog entry for code changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Require a changelog entry alongside app-code changes
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+        shell: bash
+        run: |
+          base="origin/${{ github.event.pull_request.base.ref }}"
+          changed=$(git diff --name-only "$base"...HEAD)
+          echo "Changed files:"
+          echo "$changed" | sed 's/^/  /'
+
+          code=$(echo "$changed" | grep -E '^(wpf|src)/.*\.(cs|xaml)$' || true)
+          if [ -z "$code" ]; then
+            echo "No app-code changes — changelog entry not required."
+            exit 0
+          fi
+          if echo "$changed" | grep -qx 'CHANGELOG.md'; then
+            echo "App code changed and CHANGELOG.md was updated."
+            exit 0
+          fi
+
+          echo "::error::App code changed without a CHANGELOG.md entry. Add one under '## [Unreleased]', or apply the 'skip-changelog' label if this genuinely needs no entry."
+          exit 1

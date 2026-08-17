@@ -1,0 +1,131 @@
+name: Release
+
+# Every new version gets a release, automatically.
+#
+# The trigger is the version bump itself landing on main — there is no separate "remember to tag
+# it" step, because that is the step that gets forgotten. This workflow reads the version from
+# wpf/AssemblyInfo.cs; if no matching v<version> tag exists yet, it verifies the repository is
+# release-ready, builds, runs the checks, then tags and publishes with CtrlAltStand.exe attached.
+#
+# A push that does not change the version simply finds the tag already present and exits quietly,
+# so CHANGELOG or release-note edits are safe to land at any time. If a bump lands while its
+# changelog entry is missing, the run fails; adding the entry re-triggers it and the release goes
+# out then. See CONTRIBUTING.md for the authoring side.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - wpf/AssemblyInfo.cs
+      - CHANGELOG.md
+      - docs/release-notes/**
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish release
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Read version from wpf/AssemblyInfo.cs
+        id: version
+        shell: powershell
+        run: |
+          $v = & .\scripts\Get-AppVersion.ps1
+          Write-Host "Version: $v"
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Check whether v${{ steps.version.outputs.version }} is already released
+        id: tag
+        shell: powershell
+        run: |
+          $tag = "v${{ steps.version.outputs.version }}"
+          $existing = git ls-remote --tags origin "refs/tags/$tag"
+          if ($existing) {
+            Write-Host "$tag already exists — nothing to release."
+            "exists=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } else {
+            Write-Host "$tag does not exist — this is a new version."
+            "exists=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
+
+      - name: Verify the repository is ready to release
+        if: steps.tag.outputs.exists == 'false'
+        shell: powershell
+        run: |
+          .\scripts\Assert-ReleaseReady.ps1 -Version ${{ steps.version.outputs.version }}
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build Ctrl+Alt+Stand (WPF)
+        if: steps.tag.outputs.exists == 'false'
+        shell: powershell
+        run: .\wpf\build.ps1
+
+      - name: Verify the built executable carries the release version
+        if: steps.tag.outputs.exists == 'false'
+        shell: powershell
+        run: |
+          $expected = "${{ steps.version.outputs.version }}"
+          $info = (Get-Item .\wpf\dist\CtrlAltStand.exe).VersionInfo
+          $actual = "{0}.{1}.{2}" -f $info.FileMajorPart, $info.FileMinorPart, $info.FileBuildPart
+          Write-Host "Built executable reports $actual, expected $expected"
+          if ($actual -ne $expected) {
+            Write-Host "::error::Built CtrlAltStand.exe reports version $actual but the release is $expected."
+            exit 1
+          }
+
+      - name: Run self-tests
+        if: steps.tag.outputs.exists == 'false'
+        shell: powershell
+        run: |
+          .\wpf\dist\CtrlAltStand.exe --self-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run startup smoke test
+        if: steps.tag.outputs.exists == 'false'
+        shell: powershell
+        run: |
+          .\wpf\dist\CtrlAltStand.exe --smoke-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Compose release notes
+        if: steps.tag.outputs.exists == 'false'
+        shell: powershell
+        run: |
+          $notes = & .\scripts\Get-ReleaseNotes.ps1 `
+            -Version ${{ steps.version.outputs.version }} `
+            -ExePath .\wpf\dist\CtrlAltStand.exe
+          Set-Content -LiteralPath release-notes.md -Value $notes -NoNewline
+          Write-Host $notes
+
+      # Creates the v<version> tag at this commit as part of publishing, so the tag and the
+      # release can never disagree.
+      - name: Publish GitHub release
+        if: steps.tag.outputs.exists == 'false'
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          gh release create "v$v" `
+            --target $env:GITHUB_SHA `
+            --title "Ctrl+Alt+Stand v$v" `
+            --notes-file release-notes.md `
+            .\wpf\dist\CtrlAltStand.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload the executable as a build artifact
+        if: steps.tag.outputs.exists == 'false'
+        uses: actions/upload-artifact@v7
+        with:
+          name: CtrlAltStand-v${{ steps.version.outputs.version }}
+          path: wpf/dist/CtrlAltStand.exe
+          if-no-files-found: error

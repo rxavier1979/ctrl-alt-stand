@@ -126,6 +126,9 @@
                         </Border>
                         <TextBlock Grid.Column="1" Text="Ctrl+Alt+Stand" Foreground="{StaticResource TextBrush}"
                                    FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
+                        <!-- Version, so which build is running is answerable at a glance. Set in code. -->
+                        <TextBlock Grid.Column="2" x:Name="VersionText" Foreground="{StaticResource TextFaintBrush}"
+                                   FontSize="11" VerticalAlignment="Center" Margin="8,2,0,0" />
                         <StackPanel Grid.Column="3" Orientation="Horizontal">
                             <Button Style="{StaticResource WindowButton}" Content="&#8211;" Click="Minimize_Click" />
                             <Button Style="{StaticResource CloseButton}" Content="&#10005;" Click="Close_Click" Margin="4,0,0,0" />

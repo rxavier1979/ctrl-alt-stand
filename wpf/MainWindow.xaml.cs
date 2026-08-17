@@ -37,6 +37,8 @@ namespace CtrlAltStand
             settings.Load();
             Topmost = settings.AlwaysOnTop;
 
+            VersionText.Text = "v" + AppVersion();
+
             // Reflect settings into controls without triggering handlers.
             updatingControls = true;
             SitValue.Text = settings.Plan.SitMinutes.ToString();
@@ -451,6 +453,15 @@ namespace CtrlAltStand
             FlashTaskbar();
         }
 
+        // major.minor.patch from the assembly version, which wpf\AssemblyInfo.cs owns. Shown in the
+        // title bar and the tray tooltip so the running build can be identified without hashing the
+        // .exe — telling a fixed build from the one it replaces is otherwise guesswork.
+        private static string AppVersion()
+        {
+            Version v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            return v.Major + "." + v.Minor + "." + v.Build;
+        }
+
         private static Drawing.Icon LoadAppIcon()
         {
             try
@@ -470,7 +481,7 @@ namespace CtrlAltStand
             trayIcon = new WinForms.NotifyIcon
             {
                 Icon = LoadAppIcon(),
-                Text = "Ctrl+Alt+Stand",
+                Text = "Ctrl+Alt+Stand v" + AppVersion(),
                 Visible = true
             };
             trayIcon.DoubleClick += (s, e) => RestoreWindow();

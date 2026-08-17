@@ -4,6 +4,12 @@ All notable changes to Ctrl+Alt+Stand will be documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Acknowledging a transition cue now also stops the taskbar flash. The taskbar button previously kept
+  flashing after the cue was dismissed and only cleared once the window was brought to the foreground and
+  minimized again ([#2](https://github.com/rxavier1979/ctrl-alt-stand/issues/2)).
+
 ## [0.3.0] - 2026-07-29
 
 This release replaces the WinForms interface with a redesigned WPF interface. The timer behavior and the settings file are unchanged: schedules stay start-relative, and preferences and schedule memories are still read from and written to `%LOCALAPPDATA%\CtrlAltStand\settings.ini`. The legacy WinForms source remains in `src/` and is frozen at 0.2.0.

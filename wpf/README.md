@@ -22,7 +22,7 @@ memory profiles), and `SelfTests`. Behavior — phase order, clamping (1–180),
 | `Core.cs` | Ported logic (DeskPhase, CyclePlan, AppSettings, SelfTests) — UI-agnostic |
 | `App.xaml` / `App.xaml.cs` | Resources (palette + control styles); startup + `--self-test` handling |
 | `MainWindow.xaml` / `.cs` | The window: ring, timer, status pill, controls, steppers, toggles, segmented, memory |
-| `CueWindow.xaml` / `.cs` | The bottom-right phase-transition cue |
+| `CueWindow.xaml` / `.cs` | The top-right phase-transition cue |
 | `build.ps1` | Convenience build (dotnet or msbuild) |
 
 ## Icon format (`app.ico`)
@@ -78,6 +78,27 @@ in the new XAML/WPF surface, not the behavior.
   app's behavior), while "Next" and the schedule update immediately.
 - The window **auto-fits** the screen: if it would be taller/wider than the work area (small display or
   high DPI), it scales down proportionally on launch so the whole card stays visible.
-- Phase-transition **cues are persistent** — the bottom-right cue stays until you click it to acknowledge,
-  at most one is shown at a time (a newer phase replaces the older cue), and the taskbar flashes until the
-  window is brought to the foreground.
+- Phase-transition **cues are persistent** — the top-right cue stays until you click it to acknowledge, and
+  at most one is shown at a time (a newer phase replaces the older cue). Acknowledging the cue is the whole
+  gesture: it closes the cue *and* stops the taskbar flash, so the window never has to be brought to the
+  foreground. See [Taskbar flash lifetime](#taskbar-flash-lifetime).
+
+## Taskbar flash lifetime
+
+`FlashTaskbar()` in `MainWindow.xaml.cs` flashes with `FLASHW_ALL | FLASHW_TIMERNOFG` and
+`uCount = uint.MaxValue`, which tells Windows to keep the caption and taskbar button flashing **until the
+window is activated**. Because the cue is a separate window (`CueWindow`), closing it does nothing to the
+main window's flash state — so the flash has to be ended explicitly. `StopFlashTaskbar()` issues
+`FLASHW_STOP` against the main window handle and is called from:
+
+- the `currentCue.Closed` handler, i.e. whenever the cue is acknowledged, and
+- `RestoreWindow()`, so the state is cleared deliberately rather than relying on the OS side effect of
+  activation.
+
+Without that explicit stop, the taskbar button keeps flashing after the cue is dismissed and only clears
+when the window is shown and hidden again — the bug in
+[#2](https://github.com/rxavier1979/ctrl-alt-stand/issues/2). Any new code path that starts a flash needs a
+matching stop; there is no OS-level "is it flashing" query to fall back on (`FlashWindowEx`'s return value
+reports the caption's *active* state, not whether a flash is pending), so this cannot be covered by
+`--self-test` and is verified by hand: let a transition fire with the window minimized, click the cue, and
+confirm the taskbar button settles.

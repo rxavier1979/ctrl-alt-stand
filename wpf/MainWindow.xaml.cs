@@ -444,7 +444,8 @@ namespace CtrlAltStand
                 currentCue = null;
             }
             currentCue = new CueWindow(title, detail, ColorForPhase(phase));
-            currentCue.Closed += delegate { currentCue = null; };
+            // Acknowledging the cue is the whole gesture: dismissing it also ends the taskbar flash.
+            currentCue.Closed += delegate { currentCue = null; StopFlashTaskbar(); };
             currentCue.Show();
 
             FlashTaskbar();
@@ -497,15 +498,38 @@ namespace CtrlAltStand
             if (!IsVisible) Show();
             WindowState = WindowState.Normal;
             Activate();
+            // Activation clears the flash on its own; stop it explicitly so the state never
+            // depends on the window actually winning the foreground.
+            StopFlashTaskbar();
         }
+
+        private const uint FLASHW_STOP = 0x00000000;      // end the flash, restore the original state
+        private const uint FLASHW_ALL = 0x00000003;       // caption + taskbar button
+        private const uint FLASHW_TIMERNOFG = 0x0000000C; // flash until the window is brought to the foreground
 
         private void FlashTaskbar()
         {
+            SetFlashState(FLASHW_ALL | FLASHW_TIMERNOFG, uint.MaxValue);
+        }
+
+        // FLASHW_TIMERNOFG only ends on foreground activation, so the flash has to be stopped
+        // by hand when the cue is acknowledged — otherwise the taskbar button keeps blinking
+        // after the cue is gone, and only showing/hiding the window clears it.
+        private void StopFlashTaskbar()
+        {
+            SetFlashState(FLASHW_STOP, 0);
+        }
+
+        private void SetFlashState(uint flags, uint count)
+        {
+            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero) return;   // no window handle yet (e.g. before the first Show)
+
             FLASHWINFO info = new FLASHWINFO();
             info.cbSize = Convert.ToUInt32(Marshal.SizeOf(info));
-            info.hwnd = new WindowInteropHelper(this).Handle;
-            info.dwFlags = 3 | 12;          // FLASHW_ALL (caption+tray) | FLASHW_TIMERNOFG (until foreground)
-            info.uCount = uint.MaxValue;    // keep flashing until the window is brought to the foreground
+            info.hwnd = hwnd;
+            info.dwFlags = flags;
+            info.uCount = count;
             info.dwTimeout = 0;
             FlashWindowEx(ref info);
         }

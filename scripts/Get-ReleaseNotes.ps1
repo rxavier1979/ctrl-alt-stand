@@ -1,7 +1,7 @@
 # Builds the GitHub release body for a version.
 #
 # Source of the "What's new" section, in order of preference:
-#   1. docs\release-notes\v<version>.md  — hand-written prose, used verbatim when you want the
+#   1. docs\release-notes\v<version>.md  -- hand-written prose, used verbatim when you want the
 #      friendlier phrasing used for v0.1.0-v0.3.0 rather than raw changelog wording.
 #   2. The matching "## [<version>] - <date>" section of CHANGELOG.md.
 #

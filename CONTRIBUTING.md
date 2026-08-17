@@ -73,6 +73,27 @@ Consequences worth knowing:
 They are plain PowerShell so they can be run and debugged locally rather than only inside CI. Keep
 them Windows PowerShell 5.1-compatible — that is what the workflows use.
 
+### Keep PowerShell and workflows ASCII-only
+
+**No em dashes, curly quotes, or other non-ASCII characters in `.ps1` files or workflow `run:`
+blocks.** CI enforces this.
+
+Windows PowerShell 5.1 reads a UTF-8 file with no BOM as Windows-1252. An em dash (`E2 80 94` in
+UTF-8) decodes with its `0x94` byte as a right double quotation mark, which *terminates a PowerShell
+string literal*. Depending on how the stray quotes balance out you get either a parse error or —
+much worse — a script that parses into something other than what you wrote, runs partway, and exits
+0. That is not theoretical: it made the first live run of `release.yml` skip publishing entirely
+while reporting success.
+
+Two things make this hard to catch locally:
+
+- PowerShell 7 (`pwsh`) reads UTF-8 without a BOM correctly, so a script that works when you test it
+  in `pwsh` can still be broken under the `powershell` shell CI uses. **Test release tooling with
+  `powershell.exe -NoProfile`, not just `pwsh`.**
+- A step that produces no output looks identical to a step that legitimately decided to do nothing.
+  `release.yml` now has an explicit guard that fails when the tag check yields no decision, rather
+  than letting silence skip the publish.
+
 ## Building and testing
 
 ```powershell

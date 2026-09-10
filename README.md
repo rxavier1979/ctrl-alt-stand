@@ -18,6 +18,7 @@ A lightweight Windows standing-desk timer for building better sit, stand, and mo
 - Large color-coded desktop cue, Windows sound, notification, and taskbar flash at transitions.
 - Clicking the cue acknowledges the transition and clears the taskbar flash with it — nothing else to dismiss.
 - Optional always-on-top window.
+- A subtle in-app design credit for Raul X. Soto.
 - Local settings saved under `%LOCALAPPDATA%\CtrlAltStand\settings.ini`.
 - No accounts, network access, telemetry, or cloud services.
 

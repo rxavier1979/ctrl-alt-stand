@@ -4,6 +4,12 @@ All notable changes to Ctrl+Alt+Stand will be documented here.
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-09-10
+
+### Added
+
+- The app window now credits Raul X. Soto as its designer.
+
 ## [0.3.1] - 2026-08-17
 
 ### Added

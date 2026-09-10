@@ -21,7 +21,7 @@ memory profiles), and `SelfTests`. Behavior — phase order, clamping (1–180),
 | `AssemblyInfo.cs` | Title / version / WPF theme info |
 | `Core.cs` | Ported logic (DeskPhase, CyclePlan, AppSettings, SelfTests) — UI-agnostic |
 | `App.xaml` / `App.xaml.cs` | Resources (palette + control styles); startup + `--self-test` handling |
-| `MainWindow.xaml` / `.cs` | The window: ring, timer, status pill, controls, steppers, toggles, segmented, memory |
+| `MainWindow.xaml` / `.cs` | The window: ring, timer, status pill, controls, steppers, toggles, segmented, memory, and designer credit |
 | `CueWindow.xaml` / `.cs` | The top-right phase-transition cue |
 | `build.ps1` | Convenience build (dotnet or msbuild) |
 

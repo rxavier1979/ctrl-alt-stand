@@ -1,7 +1,7 @@
 # Ctrl+Alt+Stand — WPF (refined-dark redesign)
 
 This folder is a **UI-layer rewrite** of Ctrl+Alt+Stand in WPF, implementing the refined-dark redesign
-(circular progress ring, phase-following accent, custom steppers/toggles/segmented control). It sits
+(circular progress ring, single red accent, custom steppers/toggles/segmented control). It sits
 **alongside** the original WinForms app in `../src/Program.cs` — nothing in the original was changed, so
 you can compare, build either, and swap over only when you're happy.
 

@@ -6,7 +6,7 @@
         ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="Manual">
-    <Border x:Name="Root" CornerRadius="16" Padding="16" MaxWidth="320" Background="#FF10B981">
+    <Border x:Name="Root" CornerRadius="16" Padding="16" MaxWidth="320" Background="{StaticResource AccentBrush}">
         <Border.Effect>
             <DropShadowEffect BlurRadius="34" ShadowDepth="10" Direction="270" Opacity="0.5" Color="Black" />
         </Border.Effect>

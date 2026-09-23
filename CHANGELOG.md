@@ -4,6 +4,13 @@ All notable changes to Ctrl+Alt+Stand will be documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- The accent color is now a single red for every phase instead of changing with the phase (blue for
+  Sit, green for Stand, amber for Move). The progress ring, its glow, the Start button, the header
+  wash, the status pill, the schedule tiles, and the transition cue all use the same red. The phase
+  name in the ring and the transition cue remain the indicators of which phase is active.
+
 ## [0.3.2] - 2026-09-10
 
 ### Added

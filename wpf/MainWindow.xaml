@@ -164,7 +164,7 @@
                               Stroke="{DynamicResource AccentBrush}">
                             <Path.Effect>
                                 <DropShadowEffect x:Name="RingGlow" BlurRadius="12" ShadowDepth="0"
-                                                  Color="#FF10B981" Opacity="0.9" />
+                                                  Color="{StaticResource AccentColor}" Opacity="0.9" />
                             </Path.Effect>
                         </Path>
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">

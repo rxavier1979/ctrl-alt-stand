@@ -360,7 +360,9 @@ namespace CtrlAltStand
             RingProgress.Data = BuildRing(frac);
         }
 
-        // Accent-follows-phase: swap the dynamic brushes + code-driven accents.
+        // Push the accent through the dynamic brushes + the code-driven accents. The color is the
+        // same for every phase now, so this runs once on the first phase and then no-ops per
+        // accentPhase; it stays per-phase so a phase-following accent needs no rewiring here.
         private void ApplyAccent(Color c)
         {
             Resources["AccentBrush"] = new SolidColorBrush(c);
@@ -416,11 +418,20 @@ namespace CtrlAltStand
             return "Sit";
         }
 
+        // #EF4444. Every accent in the app derives from this one value: the ring stroke and its
+        // glow, the Start button gradient, the top wash, the status pill, the brand mark, the
+        // stepper tiles and the cue background. Keep it in step with AccentColor in App.xaml,
+        // which supplies the same red as the design-time default for the XAML-declared accents.
+        private static readonly Color FixedAccent = Color.FromRgb(0xEF, 0x44, 0x44);
+
+        // The accent is deliberately fixed and no longer signals phase; the phase label and the
+        // CueWindow are the phase indicators. The per-phase branches are kept intact so making
+        // the accent follow the phase again is a matter of changing these returns and nothing else.
         private static Color ColorForPhase(DeskPhase v)
         {
-            if (v == DeskPhase.Stand) return Color.FromRgb(0x10, 0xB9, 0x81);
-            if (v == DeskPhase.Move) return Color.FromRgb(0xF5, 0x9E, 0x0B);
-            return Color.FromRgb(0x3B, 0x82, 0xF6);
+            if (v == DeskPhase.Stand) return FixedAccent;
+            if (v == DeskPhase.Move) return FixedAccent;
+            return FixedAccent;
         }
 
         // ---------- Transition cue / tray / flash / sound ----------

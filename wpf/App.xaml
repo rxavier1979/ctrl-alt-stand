@@ -17,13 +17,19 @@
         <SolidColorBrush x:Key="TextDimBrush" Color="#FFA3B1C6" />
         <SolidColorBrush x:Key="TextFaintBrush" Color="#FF7C8CA6" />
 
-        <SolidColorBrush x:Key="SitBrush" Color="#FF3B82F6" />
-        <SolidColorBrush x:Key="StandBrush" Color="#FF10B981" />
-        <SolidColorBrush x:Key="MoveBrush" Color="#FFF59E0B" />
+        <!-- One fixed accent for every phase. The accent deliberately no longer signals
+             phase; the phase label and the CueWindow are the phase indicators. -->
+        <Color x:Key="AccentColor">#FFEF4444</Color>
 
-        <!-- Accent brushes are REPLACED at runtime on every phase change. -->
-        <SolidColorBrush x:Key="AccentBrush" Color="#FF10B981" />
-        <SolidColorBrush x:Key="AccentSoftBrush" Color="#3310B981" />
+        <SolidColorBrush x:Key="SitBrush" Color="{StaticResource AccentColor}" />
+        <SolidColorBrush x:Key="StandBrush" Color="{StaticResource AccentColor}" />
+        <SolidColorBrush x:Key="MoveBrush" Color="{StaticResource AccentColor}" />
+
+        <!-- Accent brushes are REPLACED at runtime on every phase change; every phase now
+             supplies the same color. See ColorForPhase in MainWindow.xaml.cs. -->
+        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+        <!-- AccentColor at 0x33 alpha. XAML cannot derive alpha, so keep this in step by hand. -->
+        <SolidColorBrush x:Key="AccentSoftBrush" Color="#33EF4444" />
 
         <FontFamily x:Key="AppFont">Segoe UI Variable Text, Segoe UI</FontFamily>
 

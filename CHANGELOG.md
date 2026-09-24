@@ -4,6 +4,8 @@ All notable changes to Ctrl+Alt+Stand will be documented here.
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-09-24
+
 ### Changed
 
 - The accent color is now a single red for every phase instead of changing with the phase (blue for

@@ -9,10 +9,14 @@ authoritative. If this file and `CLAUDE.md` ever disagree, `CLAUDE.md` wins.
 
 ## The one difference that applies to Codex
 
-`CLAUDE.md` says agent commits end with a `Co-Authored-By` trailer. For commits authored by Codex,
-that trailer is:
+`CLAUDE.md` says agent commits end with a `Co-Authored-By` trailer naming the model that actually
+wrote the change. For commits authored by Codex, name the Codex model that did the work, with no
+Anthropic address, since Codex models are not Anthropic's. For example, on GPT-6 Astra:
 
-    Co-Authored-By: Codex Opus 5 <noreply@anthropic.com>
+    Co-Authored-By: Codex (GPT-6 Astra) <noreply@openai.com>
+
+The model name is the part that matters and it changes with the model you ran; the address is a
+non-delivering placeholder for the model's vendor.
 
 Everything else in `CLAUDE.md` — what ships, the C# 5 and PowerShell 5.1 limits, the ASCII-only rule
 for `.ps1` files and workflow `run:` blocks, versioning and release, change hygiene, and the testing

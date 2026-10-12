@@ -24,11 +24,16 @@ Conventional commits, lowercase, scoped where it helps: `fix(wpf):`, `docs:`, `c
 The subject says what changed; the body says *why*, and names the mechanism if the bug was
 non-obvious. Explain the trap, not just the patch — the next reader needs to avoid re-introducing it.
 
-Commits made by an agent end with:
+Commits made by an agent end with a `Co-Authored-By` trailer naming the model that actually wrote
+the change, for example:
 
 ```
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ```
+
+The model name is the one that did the work, not a fixed string: a Claude Fable 5.1 session writes
+`Claude Fable 5.1`, and a Codex session names the Codex model it ran (see `AGENTS.md`). A
+non-Anthropic model never carries the `noreply@anthropic.com` address.
 
 ## Versions and releases
 

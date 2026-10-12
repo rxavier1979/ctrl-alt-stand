@@ -34,7 +34,10 @@ that are easy to get wrong here.
 - When a bug's cause is non-obvious, document the trap where the code lives, not just in the commit
   message. Example: `wpf/README.md` → *Taskbar flash lifetime*.
 - Conventional commits (`fix(wpf):`, `docs:`, `ci:`, `chore(release):`), body explains *why*, and
-  agent commits end with the `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` trailer.
+  agent commits end with a `Co-Authored-By` trailer naming the model that actually wrote the change,
+  e.g. `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. The name is whatever model did the
+  work, not a fixed string; a non-Anthropic model (Codex, for example) names its own model and never
+  carries an Anthropic address. See `AGENTS.md` for the Codex form.
 - Branch off `main`, PR with `Fixes #N`, rebase-merge to keep history linear.
 
 ## Testing and reporting
